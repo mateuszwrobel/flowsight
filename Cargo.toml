@@ -1,0 +1,38 @@
+[workspace]
+resolver = "2"
+
+[package]
+name = "flowsight"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Static data-flow extractor: provenance-first edges from real code, emitted as flow-model json plus one self-contained interactive html."
+
+# Standalone crate with its own workspace, exactly as the family siblings are
+# standalone: its dependency tree must never enter another crate's lock, and
+# it shares no code with them. Phase 1+2 of specs/investigations/flowsight.md:
+# analyze -> flow model json + interactive html. The verdict surface (verify)
+# lands later.
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+license = "Apache-2.0"
+publish = false
+
+[dependencies]
+regex = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+
+[dev-dependencies]
+tempfile = "3.27"
+
+[lints.rust]
+unused_imports = "deny"
+
+[lints.clippy]
+all = "deny"

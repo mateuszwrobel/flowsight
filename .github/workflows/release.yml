@@ -1,0 +1,29 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'flowsight-v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Create or update the release page
+        run: |
+          set -euo pipefail
+          notes="$(git tag -l --format='%(contents)' "${GITHUB_REF_NAME}")"
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            gh release edit "${GITHUB_REF_NAME}" \
+              --title "flowsight ${GITHUB_REF_NAME}" --notes "${notes}"
+          else
+            gh release create "${GITHUB_REF_NAME}" --verify-tag \
+              --title "flowsight ${GITHUB_REF_NAME}" --notes "${notes}"
+          fi

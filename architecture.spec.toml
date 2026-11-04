@@ -1,0 +1,115 @@
+# flowsight architecture spec — verified by `archspec verify --strict` in
+# run-unit-tests.sh next to this file.
+#
+# Shape of the real tree (from `archspec scan`: a library unit and a binary
+# unit, 11 inter-module edges outside test modules, acyclic). The scan shows
+# no mutual module edge, so the boundaries below run strictly top-down:
+#
+#   cli        -> topology, engine, render, foundation   the analyze command
+#   topology   -> engine, index, foundation              declared-process hops
+#   engine     -> index, foundation                      the extractor walk
+#   render     -> foundation                             json + html emitters
+#   index      -> (nothing)                              the lexical source set
+#   foundation -> (nothing)                              nodes, edges, prov
+
+[project]
+language = "rust"
+# The payload ships one vendored third-party renderer under assets/ — declared
+# here so the language agreement check reads the tree honestly instead of
+# failing it.
+excluded_sources = [
+  { path = "assets", reason = "vendored third-party renderer shipped with the report template" },
+]
+
+# cli — the binary entrypoint and the library facade. The facade re-exports
+# every module below (the scan records those as edges from the `flowsight`
+# unit), and `flowsight-bin` links it as a unit-tier edge with no module
+# endpoints, so the unit claim here owns both.
+[[module]]
+name = "cli"
+matches = { units = ["flowsight", "flowsight-bin"] }
+
+[module.allowed]
+depend_on = ["topology", "engine", "render", "index", "foundation"]
+
+# topology — declared cross-process hops: the topology.toml reader and the
+# anchor resolver that draws fn -> PROCESS -> PROCESS -> fn, failing closed
+# on a stale anchor.
+[[module]]
+name = "topology"
+matches = { modules = ["flowsight::topology"] }
+
+[module.allowed]
+depend_on = ["engine", "index", "foundation"]
+
+# engine — the provenance-first extractor: route arms, typed-wiring walk,
+# sql join and the refusal taxonomy.
+[[module]]
+name = "engine"
+matches = { modules = ["flowsight::extract"] }
+
+[module.allowed]
+depend_on = ["index", "foundation"]
+
+# render — the emitters: flow-model json and the self-contained html.
+[[module]]
+name = "render"
+matches = { modules = ["flowsight::render"] }
+
+[module.allowed]
+depend_on = ["foundation"]
+
+# index — the read-only lexical source set: masking, file discovery, the
+# fn/impl/use/struct indexes and the module-path resolver.
+[[module]]
+name = "index"
+matches = { modules = ["flowsight::source"] }
+
+[module.allowed]
+depend_on = []
+
+# foundation — the model vocabulary: nodes, edges, provenance, meta.
+[[module]]
+name = "foundation"
+matches = { modules = ["flowsight::model"] }
+
+[module.allowed]
+depend_on = []
+
+# --- Cycles ---
+# Acyclic at every level: the scan shows no mutual module edge, so
+# cli -> topology -> engine -> index/foundation is the only direction
+# module edges move in.
+[[constraint]]
+type = "no_cycles"
+modules = ["cli", "topology", "engine", "render", "index", "foundation"]
+severity = "error"
+
+# --- Public API ---
+# The library crate root re-exports exactly these five modules plus the
+# vocabulary types the CLI and embedders need.
+[[constraint]]
+type = "public_api_allowlist"
+allowed = [
+  "AnalyzeConfig",
+  "Edge",
+  "EdgeKind",
+  "FlowError",
+  "FlowGraph",
+  "Meta",
+  "Model",
+  "Node",
+  "NodeKind",
+  "Prov",
+  "SourceSet",
+  "Topology",
+  "analyze",
+  "extract",
+  "model",
+  "render",
+  "html",
+  "model_json",
+  "source",
+  "topology",
+]
+severity = "error"
