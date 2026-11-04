@@ -17,6 +17,8 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
       - name: Create or update the release page
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           notes="$(git tag -l --format='%(contents)' "${GITHUB_REF_NAME}")"

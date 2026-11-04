@@ -21,6 +21,24 @@ provenance or the run refuses and names the ambiguity.
 - **Deterministic.** Two runs over the same tree produce byte-identical
   output (enforced by a test).
 
+## Install
+
+From a checkout of this repository:
+
+```sh
+cargo install --path .
+```
+
+Or fetch a released binary through npm:
+
+```sh
+npm install "@<scope>/flowsight"    # <scope> is the scope the release announces
+npx "@<scope>/flowsight" analyze . --crate <dir>   # or run it without installing
+```
+
+See [npm/README.md](npm/README.md) for how the npm package fetches and
+verifies the binary.
+
 ## Usage
 
 ```sh
