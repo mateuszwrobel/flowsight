@@ -19,6 +19,7 @@ language = "rust"
 # failing it.
 excluded_sources = [
   { path = "assets", reason = "vendored third-party renderer shipped with the report template" },
+  { path = "npm", reason = "the npm downloader package — node sources with their own marker, verified by npm/test/run-npm-tests.sh" },
 ]
 
 # cli — the binary entrypoint and the library facade. The facade re-exports
